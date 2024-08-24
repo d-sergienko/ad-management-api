@@ -22,9 +22,7 @@ This PowerShell-based API provides management functionality for DNS records and 
 
 Ensure that the necessary PowerShell modules are installed:
 ```PowerShell
-Install-Module -Name UniversalDashboard -Scope CurrentUser
-Install-Module -Name DnsServer -Scope CurrentUser
-Install-Module -Name ActiveDirectory -Scope CurrentUser
+Install.ps1
 ```
 
 3. **Configure Logging**

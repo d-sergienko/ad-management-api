@@ -1,43 +1,13 @@
-# Импорт функции логирования
-. "$PSScriptRoot\Logging.ps1"
-
-function Invoke-CertAction {
-    param (
-        [string]$Action,
-        [hashtable]$Parameters,
-        [scriptblock]$ActionScript
-    )
-
-    $ipAddress = $Request.UserHostAddress
-    $user = $env:USERNAME
-    $response = ""
-
-    try {
-        $response = & $ActionScript
-        return $response
-    } catch {
-        $response = $_.Exception.Message
-        throw $response
-    } finally {
-        Write-Log -Action $Action -IpAddress $ipAddress -User $user -Parameters $Parameters -Response $response
-    }
-}
+# src/CertificateManagement.ps1
 
 function Get-Certificate {
     param (
-        [string]$TemplateName,
         [string]$SubjectName
     )
-
-    Invoke-CertAction -Action "Get-Certificate" -Parameters @{ TemplateName = $TemplateName; SubjectName = $SubjectName } -ActionScript {
-        Import-Module ActiveDirectory
-        $certificates = Get-ADCertificate -Filter "CertificateTemplateName -eq '$TemplateName' -and Subject -eq '$SubjectName'"
-        if ($certificates) {
-            return $certificates | Select-Object -Property Subject, CertificateTemplate, NotBefore, NotAfter | ConvertTo-Json
-        } else {
-            return "Certificate not found."
-        }
-    }
+    # Примерный код для получения сертификата
+    # Замена на вашу логику
+    $certificates = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*$SubjectName*" }
+    return $certificates
 }
 
 function New-Certificate {
@@ -45,54 +15,35 @@ function New-Certificate {
         [string]$TemplateName,
         [string]$SubjectName
     )
-
-    Invoke-CertAction -Action "New-Certificate" -Parameters @{ TemplateName = $TemplateName; SubjectName = $SubjectName } -ActionScript {
-        Import-Module ActiveDirectory
-        $certRequest = New-Object -ComObject X509Enrollment.CX509CertificateRequestCertificate
-        $certRequest.InitializeFromTemplateName(0, $TemplateName)
-        $certRequest.Subject = $SubjectName
-        $certRequest.Encode()
-        $certRequest.CreateRequest()
-        return "Certificate created successfully."
+    # Примерный код для создания нового сертификата
+    # Замена на вашу логику
+    $certRequest = New-Object -TypeName PSObject -Property @{
+        TemplateName = $TemplateName
+        SubjectName = $SubjectName
     }
+    $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -KeyUsage KeyEncipherment, DataEncipherment
+    return $cert
 }
 
-function Set-Certificate {
+function Update-Certificate {
     param (
         [string]$TemplateName,
         [string]$SubjectName
     )
-
-    Invoke-CertAction -Action "Set-Certificate" -Parameters @{ TemplateName = $TemplateName; SubjectName = $SubjectName } -ActionScript {
-        Import-Module ActiveDirectory
-        $certificates = Get-ADCertificate -Filter "CertificateTemplateName -eq '$TemplateName' -and Subject -eq '$SubjectName'"
-        if ($certificates) {
-            $certRequest = New-Object -ComObject X509Enrollment.CX509CertificateRequestCertificate
-            $certRequest.InitializeFromTemplateName(0, $TemplateName)
-            $certRequest.Subject = $SubjectName
-            $certRequest.Encode()
-            $certRequest.CreateRequest()
-            return "Certificate updated successfully."
-        } else {
-            return "Certificate not found for update."
-        }
-    }
+    # Примерный код для обновления сертификата
+    # Замена на вашу логику
+    Remove-Certificate -SubjectName $SubjectName
+    New-Certificate -TemplateName $TemplateName -SubjectName $SubjectName
 }
 
 function Remove-Certificate {
     param (
-        [string]$TemplateName,
         [string]$SubjectName
     )
-
-    Invoke-CertAction -Action "Remove-Certificate" -Parameters @{ TemplateName = $TemplateName; SubjectName = $SubjectName } -ActionScript {
-        Import-Module ActiveDirectory
-        $certificates = Get-ADCertificate -Filter "CertificateTemplateName -eq '$TemplateName' -and Subject -eq '$SubjectName'"
-        if ($certificates) {
-            Remove-ADCertificate -Filter "CertificateTemplateName -eq '$TemplateName' -and Subject -eq '$SubjectName'"
-            return "Certificate removed successfully."
-        } else {
-            return "Certificate not found for deletion."
-        }
+    # Примерный код для удаления сертификата
+    # Замена на вашу логику
+    $certificates = Get-Certificate -SubjectName $SubjectName
+    foreach ($cert in $certificates) {
+        Remove-Item -Path $cert.PSPath -ErrorAction Stop
     }
 }

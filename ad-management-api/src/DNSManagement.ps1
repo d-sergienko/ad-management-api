@@ -1,97 +1,47 @@
-# Импорт функции логирования
-. "$PSScriptRoot\Logging.ps1"
+# src/DNSManagement.ps1
 
-function Invoke-DnsAction {
+function Get-DNSRecord {
     param (
-        [string]$Action,
-        [hashtable]$Parameters,
-        [scriptblock]$ActionScript
-    )
-
-    $ipAddress = $Request.UserHostAddress
-    $user = $env:USERNAME
-    $response = ""
-
-    try {
-        $response = & $ActionScript
-        return $response
-    } catch {
-        $response = $_.Exception.Message
-        throw $response
-    } finally {
-        Write-Log -Action $Action -IpAddress $ipAddress -User $user -Parameters $Parameters -Response $response
-    }
-}
-
-function Get-DnsRecord {
-    param (
-        [string]$Zone,
-        [string]$Name
-    )
-
-    Invoke-DnsAction -Action "Get-DnsRecord" -Parameters @{ Zone = $Zone; Name = $Name } -ActionScript {
-        Import-Module DnsServer
-        $dnsRecord = Get-DnsServerResourceRecord -Name $Name -ZoneName $Zone -ComputerName "localhost"
-        if ($dnsRecord) {
-            return $dnsRecord | Select-Object -Property Name, RecordType, RecordClass, Timestamp | ConvertTo-Json
-        } else {
-            return "DNS record not found."
-        }
-    }
-}
-
-function New-DnsRecord {
-    param (
-        [string]$Zone,
         [string]$Name,
-        [string]$RecordType,
-        [string]$Value,
-        [int]$TTL
+        [string]$ZoneName
     )
-
-    Invoke-DnsAction -Action "New-DnsRecord" -Parameters @{ Zone = $Zone; Name = $Name; RecordType = $RecordType; Value = $Value; TTL = $TTL } -ActionScript {
-        Import-Module DnsServer
-        Add-DnsServerResourceRecordA -Name $Name -ZoneName $Zone -IPv4Address $Value -TimeToLive $TTL -ComputerName "localhost"
-        return "DNS record created successfully."
-    }
+    # Примерный код для получения DNS записи
+    # Замена на вашу логику
+    $dnsRecord = Get-DnsServerResourceRecord -Name $Name -ZoneName $ZoneName -ErrorAction Stop
+    return $dnsRecord
 }
 
-function Set-DnsRecord {
+function New-DNSRecord {
     param (
-        [string]$Zone,
         [string]$Name,
-        [string]$RecordType,
+        [string]$Type,
         [string]$Value,
-        [int]$TTL
+        [string]$ZoneName
     )
-
-    Invoke-DnsAction -Action "Set-DnsRecord" -Parameters @{ Zone = $Zone; Name = $Name; RecordType = $RecordType; Value = $Value; TTL = $TTL } -ActionScript {
-        Import-Module DnsServer
-        $record = Get-DnsServerResourceRecord -Name $Name -ZoneName $Zone -ComputerName "localhost"
-        if ($record) {
-            Remove-DnsServerResourceRecord -Name $Name -ZoneName $Zone -RecordType $RecordType -ComputerName "localhost"
-            Add-DnsServerResourceRecordA -Name $Name -ZoneName $Zone -IPv4Address $Value -TimeToLive $TTL -ComputerName "localhost"
-            return "DNS record updated successfully."
-        } else {
-            return "DNS record not found for update."
-        }
-    }
+    # Примерный код для создания новой DNS записи
+    # Замена на вашу логику
+    Add-DnsServerResourceRecordA -Name $Name -IPv4Address $Value -ZoneName $ZoneName -ErrorAction Stop
 }
 
-function Remove-DnsRecord {
+function Update-DNSRecord {
     param (
-        [string]$Zone,
-        [string]$Name
+        [string]$Name,
+        [string]$Type,
+        [string]$Value,
+        [string]$ZoneName
     )
+    # Примерный код для обновления существующей DNS записи
+    # Замена на вашу логику
+    Remove-DnsServerResourceRecord -Name $Name -ZoneName $ZoneName -RecordType $Type -ErrorAction Stop
+    Add-DnsServerResourceRecordA -Name $Name -IPv4Address $Value -ZoneName $ZoneName -ErrorAction Stop
+}
 
-    Invoke-DnsAction -Action "Remove-DnsRecord" -Parameters @{ Zone = $Zone; Name = $Name } -ActionScript {
-        Import-Module DnsServer
-        $record = Get-DnsServerResourceRecord -Name $Name -ZoneName $Zone -ComputerName "localhost"
-        if ($record) {
-            Remove-DnsServerResourceRecord -Name $Name -ZoneName $Zone -RecordType $record.RecordType -ComputerName "localhost"
-            return "DNS record removed successfully."
-        } else {
-            return "DNS record not found for deletion."
-        }
-    }
+function Remove-DNSRecord {
+    param (
+        [string]$Name,
+        [string]$ZoneName
+    )
+    # Примерный код для удаления DNS записи
+    # Замена на вашу логику
+    Remove-DnsServerResourceRecord -Name $Name -ZoneName $ZoneName -ErrorAction Stop
 }
