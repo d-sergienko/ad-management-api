@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     ad = {
-      source = "yourusername/ad"
+      source = "github.com/yourusername/terraform-provider-ad"
       version = "~> 1.0"
     }
   }
