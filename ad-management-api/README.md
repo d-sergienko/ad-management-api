@@ -30,33 +30,29 @@ Install.ps1
 Update Logging.ps1 with your desired log file path and other settings.
 
 4. **Start the API**
+   
 ```PowerShell
-Start-UniversalDashboard -Port 8080 -Endpoint @(
-    @{
-        Url = "/dns"
-        Endpoint = "src/DNSManagement.ps1"
-    },
-    @{
-        Url = "/certificates"
-        Endpoint = "src/CertificateManagement.ps1"
-    }
-)
+Start.ps1
 ```
 The API will be available at http://localhost:8080.
 
 ## API Endpoints
 **DNS Management**
-GET /dns/{zone}/{name}: Retrieve DNS record.
-POST /dns/{zone}/{name}: Create DNS record.
-PUT /dns/{zone}/{name}: Update DNS record.
-DELETE /dns/{zone}/{name}: Remove DNS record.
+
+* GET /dns/{zone}/{name}: Retrieve DNS record.
+* POST /dns/{zone}/{name}: Create DNS record.
+* PUT /dns/{zone}/{name}: Update DNS record.
+* DELETE /dns/{zone}/{name}: Remove DNS record.
 
 **Certificate Management**
-GET /certificates/{template_name}/{subject_name}: Retrieve certificate.
-POST /certificates/{template_name}/{subject_name}: Create certificate.
-PUT /certificates/{template_name}/{subject_name}: Update certificate.
-DELETE /certificates/{template_name}/{subject_name}: Remove certificate.
+
+* GET /certificates/{template_name}/{subject_name}: Retrieve certificate.
+* POST /certificates/{template_name}/{subject_name}: Create certificate.
+* PUT /certificates/{template_name}/{subject_name}: Update certificate.
+* DELETE /certificates/{template_name}/{subject_name}: Remove certificate.
+
 **Logging**
+
 The API logs the following information for each request:
 
 - Date and time of the action
@@ -68,15 +64,18 @@ The API logs the following information for each request:
 
 ## Running Tests
 1. **Install Required Modules**
+
 Ensure that the necessary PowerShell modules are installed:
 
 ```PowerShell
 Install-Module -Name PSSwagger
 ```
-2. **Start the API** 
+2. **Start the API**
+   
 Ensure that your AD Management API is running and accessible.
 
-3. **Invoke tests**
+4. **Invoke tests**
+   
 ```PowerShell
 Invoke-Pester -Path .\tests\
 ```
