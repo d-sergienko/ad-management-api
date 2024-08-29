@@ -1,0 +1,230 @@
+openapi: 3.0.0
+info:
+  title: AD Management API
+  description: API for managing DNS and certificates in AD.
+  version: 1.0.0
+paths:
+  /dns-records:
+    get:
+      summary: Retrieve DNS records
+      parameters:
+        - in: query
+          name: Name
+          schema:
+            type: string
+        - in: query
+          name: ZoneName
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: A list of DNS records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Name:
+                          type: string
+                        RecordType:
+                          type: string
+                        IPAddress:
+                          type: string
+    post:
+      summary: Create a new DNS record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Name:
+                  type: string
+                Type:
+                  type: string
+                Value:
+                  type: string
+                ZoneName:
+                  type: string
+      responses:
+        '200':
+          description: DNS record created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+    put:
+      summary: Update an existing DNS record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Name:
+                  type: string
+                Type:
+                  type: string
+                Value:
+                  type: string
+                ZoneName:
+                  type: string
+      responses:
+        '200':
+          description: DNS record updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+    delete:
+      summary: Remove a DNS record
+      parameters:
+        - in: query
+          name: Name
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: ZoneName
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: DNS record removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+  /certificates:
+    get:
+      summary: Retrieve certificates
+      parameters:
+        - in: query
+          name: SubjectName
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: A list of certificates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  certificates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Subject:
+                          type: string
+                        NotAfter:
+                          type: string
+    post:
+      summary: Create a new certificate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                TemplateName:
+                  type: string
+                SubjectName:
+                  type: string
+      responses:
+        '200':
+          description: Certificate created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+    put:
+      summary: Update a certificate
+      parameters:
+        - in: path
+          name: subjectName
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                TemplateName:
+                  type: string
+      responses:
+        '200':
+          description: Certificate updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+    delete:
+      summary: Remove a certificate
+      parameters:
+        - in: path
+          name: subjectName
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Certificate removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
