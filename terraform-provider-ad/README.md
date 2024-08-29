@@ -13,21 +13,24 @@ This Terraform provider allows management of DNS records and certificates within
 
 1. **Clone the Repository**
 
-   ```bash
+```bash
    git clone https://github.com/yourusername/terraform-provider-ad.git
    cd terraform-provider-ad
 ```
 
 2. **Build the Provider**
+
 ```bash
 go mod tidy
 go build -o terraform-provider-ad
 ```
 
 3. **Install the Provider**
+
 Copy the built binary to your Terraform plugins directory or use it directly in your Terraform configuration.
 
-4. **Configure the Provider**
+5. **Configure the Provider**
+
 In your Terraform configuration file (main.tf), add the provider block:
 
 ```hcl
@@ -77,6 +80,7 @@ resource "ad_dns_record" "example" {
 }
 ```
 
+
 `ad_certificate`
 - create: Create a certificate.
 - read: Read a certificate.
@@ -91,6 +95,7 @@ resource "ad_certificate" "example" {
 ```
 
 ## Running Tests
+
 To run tests for the provider, ensure you have Go installed and run:
 
 ```bash
