@@ -147,7 +147,7 @@ function Handle-Request {
 }
 
 # Настройка и запуск API с помощью UniversalDashboard
-Start-UDDashboard -Port $port -Endpoint {
+Start-UDRestApi -Name 'AD-Management-API' -Port $port -Endpoint {
     New-UDEndpoint -Url "/dns/get" -Method GET -Endpoint {
         Handle-Request -Request $Request
     }
