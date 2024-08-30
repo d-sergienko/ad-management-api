@@ -5,11 +5,7 @@ Import-Module -Name ./src/Logging.ps1
 Import-Module -Name UniversalDashboard.Community
 
 # Загрузите конфигурацию
-$config = .\config.ps1
-
-# Логирование
-$logFilePath = $config.LogFilePath
-$port = $config.Port
+. .\config.ps1
 
 # Функция для аутентификации пользователя через AD
 function Test-ADUserAuthentication {
