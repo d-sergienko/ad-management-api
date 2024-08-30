@@ -2,7 +2,7 @@
 Import-Module -Name ./src/DNSManagement.ps1
 Import-Module -Name ./src/CertificateManagement.ps1
 Import-Module -Name ./src/Logging.ps1
-Import-Module -Name UniversalDashboard
+Import-Module -Name UniversalDashboard.Community
 
 # Загрузите конфигурацию
 $config = .\config.ps1
