@@ -1,7 +1,6 @@
 # Импортируйте модули и настройки
 Import-Module -Name ./src/DNSManagement.ps1
 Import-Module -Name ./src/CertificateManagement.ps1
-Import-Module -Name ./src/Logging.ps1
 Import-Module -Name UniversalDashboard.Community
 
 # Загрузите конфигурацию
@@ -26,35 +25,38 @@ function Test-ADUserAuthentication {
             return $auth
         }
     } catch {
-        Write-Log -Message "Authentication failed for user $username. Error: $_" -LogFilePath $logFilePath
+        Write-UDLog -Message "Authentication failed for user $username. Error: $_" 
         return $false
     }
 }
 
 # Функция обработки запросов
-function Handle-Request {
+function Complete-Request {
     param (
-        [System.Net.HttpListenerRequest]$Request
+        [Microsoft.AspNetCore.Http.Internal.DefaultHttpRequest]$Request,
+        $Body
     )
 
     try {
-        $username = $Request.Headers["Username"]
-        $password = $Request.Headers["Password"] | ConvertTo-SecureString -AsPlainText -Force
+        # $username = $Request.Headers["Username"]
+        $username = 'testU'
+        # $password = $Request.Headers["Password"] | ConvertTo-SecureString -AsPlainText -Force
+        $password = 'testP'
 
-        # Проверка аутентификации
-        if (-not (Test-ADUserAuthentication -username $username -password $password)) {
-            Write-Log -Message "Unauthorized access attempt by user $username" -LogFilePath $logFilePath
-            return @{
-                Body = "Unauthorized"
-                StatusCode = 401
-            }
-        }
+        # Write-UDLog -Message "User: $username, pass = $password"
+        # # Проверка аутентификации
+        # if (-not (Test-ADUserAuthentication -username $username -password $password)) {
+        #     Write-UDLog -Message "Unauthorized access attempt by user $username" 
+        #     return "" | ConvertTo-Json
+        # }
+
+        Write-UDLog -Message "RAW Body: $Body"
+        $body = $Body | ConvertFrom-Json
 
         # Логирование начала обработки запроса
-        Write-Log -Message "Processing request: URL=$($Request.Url.AbsolutePath), Method=$($Request.HttpMethod), Headers=$($Request.Headers), Body=$($Request.InputStream.ReadToEnd())" -LogFilePath $logFilePath
+        Write-UDLog -Message "Processing request: URL=$($Request.Path), Method=$($Request.Method), Headers=$($Request.Headers), Body=$($body | Format-List | Out-String)" 
 
-        $body = $Request.InputStream.ReadToEnd() | ConvertFrom-Json
-        $action = $Request.Url.AbsolutePath -replace '^/+', ''
+        $action = $Request.Path -replace '^/api/+', ''
         $params = @{
             'Name' = $body.Name
             'Type' = $body.Type
@@ -67,7 +69,7 @@ function Handle-Request {
         switch ($action) {
             "dns/get" {
                 $result = Get-DNSRecord -Name $params['Name'] -ZoneName $params['ZoneName']
-                Write-Log -Message "Retrieved DNS record: $result" -LogFilePath $logFilePath
+                Write-UDLog -Message "Retrieved DNS record: $result" 
                 return @{
                     Body = $result | ConvertTo-Json
                     StatusCode = 200
@@ -75,7 +77,7 @@ function Handle-Request {
             }
             "dns/new" {
                 New-DNSRecord -Name $params['Name'] -Type $params['Type'] -Value $params['Value'] -ZoneName $params['ZoneName']
-                Write-Log -Message "Created DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Created DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" 
                 return @{
                     Body = "DNS record created successfully"
                     StatusCode = 201
@@ -83,7 +85,7 @@ function Handle-Request {
             }
             "dns/update" {
                 Update-DNSRecord -Name $params['Name'] -Type $params['Type'] -Value $params['Value'] -ZoneName $params['ZoneName']
-                Write-Log -Message "Updated DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Updated DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" 
                 return @{
                     Body = "DNS record updated successfully"
                     StatusCode = 200
@@ -91,7 +93,7 @@ function Handle-Request {
             }
             "dns/remove" {
                 Remove-DNSRecord -Name $params['Name'] -ZoneName $params['ZoneName']
-                Write-Log -Message "Removed DNS record: Name=$($params['Name'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Removed DNS record: Name=$($params['Name'])" 
                 return @{
                     Body = "DNS record deleted successfully"
                     StatusCode = 200
@@ -99,7 +101,7 @@ function Handle-Request {
             }
             "certificates/get" {
                 $result = Get-Certificate -SubjectName $params['SubjectName']
-                Write-Log -Message "Retrieved certificate: $result" -LogFilePath $logFilePath
+                Write-UDLog -Message "Retrieved certificate: $result" 
                 return @{
                     Body = $result | ConvertTo-Json
                     StatusCode = 200
@@ -107,7 +109,7 @@ function Handle-Request {
             }
             "certificates/new" {
                 New-Certificate -TemplateName $params['TemplateName'] -SubjectName $params['SubjectName']
-                Write-Log -Message "Created certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Created certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" 
                 return @{
                     Body = "Certificate created successfully"
                     StatusCode = 201
@@ -115,7 +117,7 @@ function Handle-Request {
             }
             "certificates/update" {
                 Update-Certificate -TemplateName $params['TemplateName'] -SubjectName $params['SubjectName']
-                Write-Log -Message "Updated certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Updated certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" 
                 return @{
                     Body = "Certificate updated successfully"
                     StatusCode = 200
@@ -123,14 +125,14 @@ function Handle-Request {
             }
             "certificates/remove" {
                 Remove-Certificate -SubjectName $params['SubjectName']
-                Write-Log -Message "Removed certificate: SubjectName=$($params['SubjectName'])" -LogFilePath $logFilePath
+                Write-UDLog -Message "Removed certificate: SubjectName=$($params['SubjectName'])" 
                 return @{
                     Body = "Certificate deleted successfully"
                     StatusCode = 200
                 }
             }
             default {
-                Write-Log -Message "Unknown action: $action" -LogFilePath $logFilePath
+                Write-UDLog -Message "Unknown action: $action" 
                 return @{
                     Body = "Unknown action: $action"
                     StatusCode = 400
@@ -138,7 +140,7 @@ function Handle-Request {
             }
         }
     } catch {
-        Write-Log -Message "Error processing request: $_" -LogFilePath $logFilePath
+        Write-UDLog -Message "Error processing request: $_" 
         return @{
             Body = "Internal Server Error"
             StatusCode = 500
@@ -147,58 +149,69 @@ function Handle-Request {
 }
 
 # Настройка и запуск API с помощью UniversalDashboard
-Start-UDRestApi -Name 'AD-Management-API' -Port $port -Endpoint {
-    New-UDEndpoint -Url "/dns/get" -Method GET -Endpoint {
-        Handle-Request -Request $Request
+$EP_DNS_GET     = New-UDEndpoint -Url "/dns/get"    -Method POST     -Endpoint  { Complete-Request -Request $Request -Body $Body }
+$EP_DNS_NEW     = New-UDEndpoint -Url "/dns/new"    -Method POST    -Endpoint   { Complete-Request -Request $Request -Body $Body }
+$EP_DNS_UPDATE  = New-UDEndpoint -Url "/dns/update" -Method PUT     -Endpoint   { Complete-Request -Request $Request -Body $Body }
+$EP_DNS_REMOVE  = New-UDEndpoint -Url "/dns/remove" -Method DELETE  -Endpoint   { Complete-Request -Request $Request -Body $Body }
+
+
+    # New-UDEndpoint -Url "/certificates/get" -Method GET -Endpoint {
+    #     Handle-Request -Request $Request
+    # },
+
+    # New-UDEndpoint -Url "/certificates/new" -Method POST -Endpoint {
+    #     Handle-Request -Request $Request
+    # },
+
+    # New-UDEndpoint -Url "/certificates/update" -Method PUT -Endpoint {
+    #     Handle-Request -Request $Request
+    # },
+
+    # New-UDEndpoint -Url "/certificates/remove" -Method DELETE -Endpoint {
+    #     Handle-Request -Request $Request
+    # },
+
+    # # Статический эндпоинт для Swagger UI
+    # New-UDEndpoint -Url "/swagger-ui" -Method GET -Endpoint {
+    #     $swaggerPath = Join-Path $PSScriptRoot "swagger/swagger-ui.html"
+    #     $response = [System.IO.File]::ReadAllText($swaggerPath)
+    #     return @{
+    #         Body = $response
+    #         StatusCode = 200
+    #         Headers = @{ "Content-Type" = "text/html" }
+    #     }
+    # },
+
+    # # Статический эндпоинт для Swagger YAML
+    # New-UDEndpoint -Url "/swagger.yaml" -Method GET -Endpoint {
+    #     $swaggerYamlPath = Join-Path $PSScriptRoot "swagger/swagger.yaml"
+    #     $response = [System.IO.File]::ReadAllText($swaggerYamlPath)
+    #     return @{
+    #         Body = $response
+    #         StatusCode = 200
+    #         Headers = @{ "Content-Type" = "application/x-yaml" }
+    #     }
+    # },
+
+    # test
+$EP_TEST = New-UDEndpoint -Url "/test" -Method GET -Endpoint {
+        Get-Process | ForEach-Object { [PSCustomObject]@{ Name = $_.Name; ID=$_.ID} }  | ConvertTo-Json
+        # return @{
+        #     Body = "test"
+        #     StatusCode = 200
+        #     Headers = @{ "Content-Type" = "text/plain" }
+        # }
     }
 
-    New-UDEndpoint -Url "/dns/new" -Method POST -Endpoint {
-        Handle-Request -Request $Request
-    }
 
-    New-UDEndpoint -Url "/dns/update" -Method PUT -Endpoint {
-        Handle-Request -Request $Request
-    }
 
-    New-UDEndpoint -Url "/dns/remove" -Method DELETE -Endpoint {
-        Handle-Request -Request $Request
-    }
+# $ne2 = New-UDEndpoint -Url "/test" -Method GET -Endpoint {
+#     return @{
+#         Body = "test"
+#         StatusCode = 200
+#     }
+# }
 
-    New-UDEndpoint -Url "/certificates/get" -Method GET -Endpoint {
-        Handle-Request -Request $Request
-    }
-
-    New-UDEndpoint -Url "/certificates/new" -Method POST -Endpoint {
-        Handle-Request -Request $Request
-    }
-
-    New-UDEndpoint -Url "/certificates/update" -Method PUT -Endpoint {
-        Handle-Request -Request $Request
-    }
-
-    New-UDEndpoint -Url "/certificates/remove" -Method DELETE -Endpoint {
-        Handle-Request -Request $Request
-    }
-
-    # Статический эндпоинт для Swagger UI
-    New-UDEndpoint -Url "/swagger-ui" -Method GET -Endpoint {
-        $swaggerPath = Join-Path $PSScriptRoot "swagger/swagger-ui.html"
-        $response = [System.IO.File]::ReadAllText($swaggerPath)
-        return @{
-            Body = $response
-            StatusCode = 200
-            Headers = @{ "Content-Type" = "text/html" }
-        }
-    }
-
-    # Статический эндпоинт для Swagger YAML
-    New-UDEndpoint -Url "/swagger.yaml" -Method GET -Endpoint {
-        $swaggerYamlPath = Join-Path $PSScriptRoot "swagger/swagger.yaml"
-        $response = [System.IO.File]::ReadAllText($swaggerYamlPath)
-        return @{
-            Body = $response
-            StatusCode = 200
-            Headers = @{ "Content-Type" = "application/x-yaml" }
-        }
-    }
-}
+$Endpoints = @($EP_DNS_GET, $EP_DNS_NEW, $EP_DNS_UPDATE, $EP_DNS_REMOVE, $EP_TEST)
+Enable-UDLogging
+Start-UDRestApi -Name 'AD-Management-API' -Port $port -Endpoint $Endpoints -Debug -Verbose
