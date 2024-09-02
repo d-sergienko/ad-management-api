@@ -70,15 +70,15 @@ function Complete-Request {
             "dns/get" {
                 $result = Get-DNSRecord -Name $params['Name'] -ZoneName $params['ZoneName']
                 Write-UDLog -Message "Retrieved DNS record: $result" 
-                return @{
-                    Body = $result | ConvertTo-Json
+                $result = @{
+                    Body = $result
                     StatusCode = 200
                 }
             }
             "dns/new" {
                 New-DNSRecord -Name $params['Name'] -Type $params['Type'] -Value $params['Value'] -ZoneName $params['ZoneName']
                 Write-UDLog -Message "Created DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" 
-                return @{
+                $result = @{
                     Body = "DNS record created successfully"
                     StatusCode = 201
                 }
@@ -86,7 +86,7 @@ function Complete-Request {
             "dns/update" {
                 Update-DNSRecord -Name $params['Name'] -Type $params['Type'] -Value $params['Value'] -ZoneName $params['ZoneName']
                 Write-UDLog -Message "Updated DNS record: Name=$($params['Name']), Type=$($params['Type']), Value=$($params['Value'])" 
-                return @{
+                $result = @{
                     Body = "DNS record updated successfully"
                     StatusCode = 200
                 }
@@ -94,7 +94,7 @@ function Complete-Request {
             "dns/remove" {
                 Remove-DNSRecord -Name $params['Name'] -ZoneName $params['ZoneName']
                 Write-UDLog -Message "Removed DNS record: Name=$($params['Name'])" 
-                return @{
+                $result = @{
                     Body = "DNS record deleted successfully"
                     StatusCode = 200
                 }
@@ -102,15 +102,15 @@ function Complete-Request {
             "certificates/get" {
                 $result = Get-Certificate -SubjectName $params['SubjectName']
                 Write-UDLog -Message "Retrieved certificate: $result" 
-                return @{
-                    Body = $result | ConvertTo-Json
+                $result = @{
+                    Body = $result
                     StatusCode = 200
                 }
             }
             "certificates/new" {
                 New-Certificate -TemplateName $params['TemplateName'] -SubjectName $params['SubjectName']
                 Write-UDLog -Message "Created certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" 
-                return @{
+                $result = @{
                     Body = "Certificate created successfully"
                     StatusCode = 201
                 }
@@ -118,7 +118,7 @@ function Complete-Request {
             "certificates/update" {
                 Update-Certificate -TemplateName $params['TemplateName'] -SubjectName $params['SubjectName']
                 Write-UDLog -Message "Updated certificate: TemplateName=$($params['TemplateName']), SubjectName=$($params['SubjectName'])" 
-                return @{
+                $result = @{
                     Body = "Certificate updated successfully"
                     StatusCode = 200
                 }
@@ -126,14 +126,14 @@ function Complete-Request {
             "certificates/remove" {
                 Remove-Certificate -SubjectName $params['SubjectName']
                 Write-UDLog -Message "Removed certificate: SubjectName=$($params['SubjectName'])" 
-                return @{
+                $result = @{
                     Body = "Certificate deleted successfully"
                     StatusCode = 200
                 }
             }
             default {
                 Write-UDLog -Message "Unknown action: $action" 
-                return @{
+                $result = @{
                     Body = "Unknown action: $action"
                     StatusCode = 400
                 }
@@ -141,11 +141,12 @@ function Complete-Request {
         }
     } catch {
         Write-UDLog -Message "Error processing request: $_" 
-        return @{
+        $result = @{
             Body = "Internal Server Error"
             StatusCode = 500
         }
     }
+    return $result | ConvertTo-Json
 }
 
 # Настройка и запуск API с помощью UniversalDashboard
@@ -195,12 +196,12 @@ $EP_DNS_REMOVE  = New-UDEndpoint -Url "/dns/remove" -Method DELETE  -Endpoint   
 
     # test
 $EP_TEST = New-UDEndpoint -Url "/test" -Method GET -Endpoint {
-        Get-Process | ForEach-Object { [PSCustomObject]@{ Name = $_.Name; ID=$_.ID} }  | ConvertTo-Json
-        # return @{
-        #     Body = "test"
-        #     StatusCode = 200
-        #     Headers = @{ "Content-Type" = "text/plain" }
-        # }
+        $result = Get-Process | ForEach-Object { [PSCustomObject]@{ Name = $_.Name; ID=$_.ID} }
+        $ret = @{
+            Body = $result
+            StatusCode = 200
+        }
+        return $ret | ConvertTo-Json
     }
 
 
